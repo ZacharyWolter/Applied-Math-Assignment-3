@@ -25,7 +25,7 @@ function forward_euler_fixed_step_integration_test_new_ZW
         [t_list_1,X_list_1,h_avg, num_evals] = fixed_step_integration(rate_func_in,tspan,X0,h_ref_1);
         [t_list_2,X_list_2,h_avg, num_evals] = fixed_step_integration(rate_func_in,tspan,X0,h_ref_2);
         [t_list_3,X_list_3,h_avg, num_evals] = fixed_step_integration(rate_func_in,tspan,X0,h_ref_3);
-    elseif flag == 4               % Implicit Midpoint Method
+    elseif flag == 4   % Implicit Midpoint Method
         [t_list_1,X_list_1,h_avg, num_evals] = fixed_step_integration_midpoint_method(rate_func_in,tspan,X0,h_ref_1);
         [t_list_2,X_list_2,h_avg, num_evals] = fixed_step_integration_midpoint_method(rate_func_in,tspan,X0,h_ref_2);
         [t_list_3,X_list_3,h_avg, num_evals] = fixed_step_integration_midpoint_method(rate_func_in,tspan,X0,h_ref_3);
@@ -126,61 +126,60 @@ function forward_euler_fixed_step_integration_test_new_ZW
 
    end
         
-% Stability
-h_ref = 0.38;
-tspan = [0 20];
-X0 = 1;
-rate_func_in = @rate_func01;
-analytical_t_list = linspace(tspan(1),tspan(2),2000);   % typo fixed
-analytical_X_list = cos(analytical_t_list);
+    % Stability
+    h_refs = [0.38; .45];
+    tspan = [0 20];
+    X0 = 1;
+    rate_func_in = @rate_func01;
+    analytical_t_list = linspace(tspan(1),tspan(2),2000);   % typo fixed
+    analytical_X_list = cos(analytical_t_list);
 
-[t_list_1,X_list_1,~,~] = forward_euler_fixed_step_integration(rate_func_in,tspan,X0,h_ref);
-[t_list_2,X_list_2,~,~] = fixed_step_integration(rate_func_in,tspan,X0,h_ref);
-[t_list_3,X_list_3,~,~] = explicit_midpoint_fixed_step_integration(rate_func_in,tspan,X0,h_ref);
-[t_list_4,X_list_4,~,~] = fixed_step_integration_midpoint_method(rate_func_in,tspan,X0,h_ref);
+    for i = 1:length(h_refs)
 
-t_lists = {t_list_1,t_list_2,t_list_3,t_list_4};
-X_lists = {X_list_1,X_list_2,X_list_3,X_list_4};
-method_names = {'Forward Euler','Backward Euler','Explicit Midpoint','Implicit Midpoint'};
-markers = {'o','s','^','d'};
-is_unstable = [true false true false];
+        h_ref = h_refs(i);
 
-figure('Color','w','Position',[100 50 1000 1300]);
-tl = tiledlayout(4,1,'TileSpacing','normal','Padding','compact');
+        [t_list_1,X_list_1,~,~] = forward_euler_fixed_step_integration(rate_func_in,tspan,X0,h_ref);
+        [t_list_2,X_list_2,~,~] = fixed_step_integration(rate_func_in,tspan,X0,h_ref);
+        [t_list_3,X_list_3,~,~] = explicit_midpoint_fixed_step_integration(rate_func_in,tspan,X0,h_ref);
+        [t_list_4,X_list_4,~,~] = fixed_step_integration_midpoint_method(rate_func_in,tspan,X0,h_ref);
 
-    for i = 1:4
-        ax = nexttile; hold on;
-        plot(analytical_t_list, analytical_X_list, 'k-', ...
-            'LineWidth',2,'DisplayName','Analytical Solution');
-        plot(t_lists{i}, abs(X_lists{i}), [markers{i} '-'], ...
-            'LineWidth',1.5,'MarkerSize',5,'Color',[0.85 0.33 0.10], ...
-            'MarkerFaceColor','w','DisplayName','Numerical Solution');
-        set(ax,'YScale','log','FontSize',14,'TickLabelInterpreter','latex', ...
-            'YTick',10.^(-40:20:40),'Box','on', ...
-            'YMinorTick','off','YMinorGrid','off','XMinorGrid','off');
-        grid on;
-        xlim(tspan);
-        % ylim([1e-40 1e40]);
-    
-        title(method_names{i},'Interpreter','latex','FontSize',16);
-        xlabel('$t$','Interpreter','latex','FontSize',15);
-        ylabel('$|x(t)|$','Interpreter','latex','FontSize',15);
-    
-        if is_unstable(i), loc = 'northwest'; else, loc = 'northeast'; end
-        legend('Interpreter','latex','Location',loc,'FontSize',13);
-        hold off;
+        t_lists = {t_list_1,t_list_2,t_list_3,t_list_4};
+        X_lists = {X_list_1,X_list_2,X_list_3,X_list_4};
+
+        method_names = {'Forward Euler','Backward Euler','Explicit Midpoint','Implicit Midpoint'};
+
+        figure('Color','w','Position',[100 50 1000 1300]);
+        tl = tiledlayout(4,1,'TileSpacing','normal','Padding','compact');
+
+        for i = 1:4
+            ax = nexttile(tl); hold on;
+            h1 = plot(analytical_t_list, analytical_X_list, 'k-', 'LineWidth', 3, 'DisplayName','Analytical Solution');
+            h2 = plot(t_lists{i}, X_lists{i}, 'LineWidth', 2, 'DisplayName','Numerical Solution');
+
+            set(ax, 'FontSize',14 , 'TickLabelInterpreter','latex');
+            grid on;
+            xlim(tspan);
+            ylim([-1.1 1.1]);
+
+            title(method_names{i}, 'Interpreter','latex', 'FontSize',16);
+            xlabel('$t$', 'Interpreter','latex', 'FontSize',15);
+            ylabel('$X(t)$', 'Interpreter','latex', 'FontSize',15);
+            hold off;
+
+            if i == 1
+                axLeg = ax;
+                hLeg  = [h1 h2];
+            end
+        end
+
+        lgd = legend(axLeg, hLeg, 'Interpreter','latex', 'FontSize',13);
+        lgd.Layout.Tile = 'east';
+
+        title(tl, sprintf('Stability Comparison of Explicit and Implicit Methods ($h_{\\mathrm{ref}} = %g$)', h_ref), 'Interpreter','latex', 'FontSize',18);
+
+        myfig = gcf();
+        exportgraphics(myfig, sprintf('Stability_Comparison_%d.png', round(h_ref*100)), 'Resolution', 600);
     end
-
-    n = numel(t_list_2)-1;
-BE_exact = X0*(1/(1+10*h_ref)).^(0:n);
-IM_exact = X0*((1-5*h_ref)/(1+5*h_ref)).^(0:n);
-fprintf('BE   code: %.3e  exact: %.3e\n', X_list_2(end), BE_exact(end));
-fprintf('IM   code: %.3e  exact: %.3e\n', X_list_4(end), IM_exact(end));
-
-title(tl, sprintf(['Stability Comparison of Explicit and Implicit Methods, ' ...
-    '$h_{\\mathrm{ref}} = %g$'], h_ref), 'Interpreter','latex','FontSize',18);
-
-exportgraphics(gcf,'Stability-Comparison-of-Explicit-and-Implicit-Methods.png','Resolution',600);
 end
 
 
